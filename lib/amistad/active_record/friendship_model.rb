@@ -44,6 +44,37 @@ module Amistad
         def can_unblock?(user)
           blocked? && self.blocker == user
         end
+        
+        def approve
+          notify_observers :before_approve
+          if self.update_attribute(:pending, false)
+            notify_observers :after_approve
+            true
+          else
+            false
+          end
+        end
+        
+        def block
+          notify_observers :before_block
+          if self.friendship.update_attribute(:blocker, friend)
+            notify_observers :after_block
+            true
+          else
+            false
+          end
+        end
+        
+        def unblock
+          notify_observers :before_unblock
+          if self.friendship.update_attribute(:blocker, nil)
+            notify_observers :after_unblock
+            true
+          else
+            false
+          end
+        end
+        
       end
     end
   end

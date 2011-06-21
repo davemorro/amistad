@@ -45,16 +45,16 @@ module Amistad
 
       module InstanceMethods
         # suggest a user to become a friend. If the operation succeeds, the method returns true, else false
-        def invite(user)
+        def invite(user, reason = nil, greeting = nil)
           return false if user == self || find_any_friendship_with(user)
-          Friendship.new(:user_id => self.id, :friend_id => user.id).save
+          Friendship.new(:user_id => self.id, :friend_id => user.id, :reason => reason, :greeting => greeting).save
         end
 
         # approve a friendship invitation. If the operation succeeds, the method returns true, else false
         def approve(user)
           friendship = find_any_friendship_with(user)
           return false if friendship.nil? || invited?(user)
-          friendship.update_attribute(:pending, false)
+          friendship.approve
         end
 
         # deletes a friendship
@@ -78,14 +78,14 @@ module Amistad
         def block(user)
           friendship = find_any_friendship_with(user)
           return false if friendship.nil? || !friendship.can_block?(self)
-          friendship.update_attribute(:blocker, self)
+          friendship.block
         end
 
         # unblocks a friendship
         def unblock(user)
           friendship = find_any_friendship_with(user)
           return false if friendship.nil? || !friendship.can_unblock?(self)
-          friendship.update_attribute(:blocker, nil)
+          friendship.unblock
         end
 
         # returns the list of blocked friends
@@ -106,6 +106,10 @@ module Amistad
         # checks if a user is a friend
         def friend_with?(user)
           friends.include?(user)
+        end
+
+        def pending_with?(user)
+          connected_with?(user) && !friend_with?(user)
         end
 
         # checks if a current user is connected to given user
